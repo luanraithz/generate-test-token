@@ -1,4 +1,4 @@
-module  github.com/luanraithz/generate-test-token
+module github.com/luanraithz/generate-test-token
 
 go 1.16
 

@@ -14,9 +14,7 @@ import (
 type AppType string
 
 const (
-	Secret         = "segredoMuitoSecretoDeTestes"
-	Email  AppType = "Email"
-	App    AppType = "App"
+	Secret = "segredoMuitoSecretoDeTestes"
 )
 
 func must(err error) {
@@ -26,27 +24,22 @@ func must(err error) {
 }
 
 type Params struct {
-	AutoCopy bool
-	Subject  string
-	Type     string
+	AutoCopy  bool
+	HideEmail bool
+	Subject   string
 }
 
 func Generate(params Params) string {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	if params.Type == string(App) {
-		claims["appid"] = params.Subject
-	} else {
+	if !params.HideEmail {
 		claims["unique_name"] = params.Subject
 	}
 	claims["iss"] = Secret
 	now := time.Now()
-	claims["at"] = float64(now.Unix())
-	expiration := float64(now.AddDate(100, 0, 0).Unix())
-	claims["xp"] = expiration
-	claims["exp"] = expiration
-	claims["ud"] = Secret
-	claims["sub"] = "1234567890"
+	claims["iat"] = float64(now.Unix())
+	claims["exp"] = float64(now.AddDate(100, 0, 0).Unix())
+	claims["sub"] = params.Subject
 	claims["aud"] = Secret
 	t, err := token.SignedString([]byte(Secret))
 	must(err)
@@ -56,14 +49,14 @@ func Generate(params Params) string {
 func main() {
 	copy := flag.Bool("c", true, "Automatically copies the token to clipboard")
 	std := flag.Bool("std", false, "Automatically copies the token to clipboard")
-	t := flag.String("t", string(Email), "Type (App or Email)")
 	email := flag.String("e", "", "Type (App or Email)")
+	hideEmail := flag.Bool("h", false, "Hide unique_name")
 	flag.Parse()
 
 	token := Generate(Params{
-		AutoCopy: *copy,
-		Subject:  *email,
-		Type:     *t,
+		AutoCopy:  *copy,
+		Subject:   *email,
+		HideEmail: *hideEmail,
 	})
 	if *std {
 		fmt.Print(token)
